@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 3 — Design | PolyLine Editor | CS 555 HCI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+:root {
+  --ink:      #0f0f14;
+  --ink2:     #2a2a3a;
+  --muted:    #6b6b8a;
+  --rule:     #e2e2ec;
+  --bg:       #fafaf8;
+  --surface:  #ffffff;
+  --blue:     #2563eb;
+  --blue-lt:  #dbeafe;
+  --green:    #059669;
+  --green-lt: #d1fae5;
+  --amber:    #d97706;
+  --amber-lt: #fef3c7;
+  --red:      #dc2626;
+  --red-lt:   #fee2e2;
+  --purple:   #7c3aed;
+  --purple-lt:#ede9fe;
+  --mono: 'Space Mono', monospace;
+  --serif: 'Fraunces', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ---- NAV ---- */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,250,248,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rule);
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 52px;
+}
+.nav-brand {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: 32px;
+  white-space: nowrap;
+}
+.nav-brand span { color: var(--blue); }
+.nav-links { display: flex; gap: 0; flex: 1; overflow-x: auto; }
+.nav-links a {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0 14px;
+  height: 52px;
+  display: flex; align-items: center;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.nav-links a:hover { color: var(--ink); border-color: var(--rule); }
+.nav-links a.active { color: var(--blue); border-color: var(--blue); }
+.nav-badge {
+  font-size: 10px;
+  background: var(--blue);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ---- HERO ---- */
+.hero {
+  padding: 80px 48px 64px;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 64px;
+  align-items: start;
+}
+.hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: 48px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.hero h1 strong { font-weight: 600; font-style: normal; }
+.hero-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 28px;
+  max-width: 520px;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all .15s;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.btn-outline:hover { background: var(--surface); border-color: #c0c0d0; }
+
+/* Phase card (hero right) */
+.phase-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.phase-card-header {
+  background: var(--ink);
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.phase-row {
+  display: flex; align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--rule);
+  gap: 12px;
+  font-size: 12px;
+}
+.phase-row:last-child { border-bottom: none; }
+.phase-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.phase-row.current { background: var(--blue-lt); }
+.phase-row.current .phase-name { color: var(--blue); font-weight: 700; }
+.phase-num-sm { color: var(--muted); font-size: 10px; min-width: 16px; }
+
+/* ---- MAIN LAYOUT ---- */
+.page-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px 80px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.toc {
+  position: sticky; top: 68px;
+  padding: 20px 0;
+}
+.toc-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--muted);
+  margin-bottom: 12px;
+}
+.toc a {
+  display: block; font-size: 11px; color: var(--muted);
+  text-decoration: none; padding: 5px 0 5px 12px;
+  border-left: 2px solid var(--rule);
+  transition: color .15s, border-color .15s;
+}
+.toc a:hover { color: var(--ink); border-color: #aaa; }
+.toc a.active { color: var(--blue); border-color: var(--blue); }
+
+/* ---- SECTIONS ---- */
+.content { padding-top: 20px; }
+
+section { margin-bottom: 60px; }
+
+.section-eyebrow {
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+h2 {
+  font-family: var(--serif);
+  font-size: 28px; font-weight: 600;
+  line-height: 1.2; margin-bottom: 16px;
+  color: var(--ink);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+h3 {
+  font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink2); margin: 24px 0 10px;
+}
+p { color: var(--ink2); margin-bottom: 12px; line-height: 1.75; }
+
+/* ---- TABLES ---- */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead tr { background: var(--ink); color: #fff; }
+thead th {
+  padding: 10px 14px; text-align: left;
+  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 700;
+}
+tbody td { padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tbody tr:hover td { background: #f5f5fa; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ---- CODE ---- */
+code {
+  font-family: var(--mono);
+  font-size: 11px; background: #f0f0f8;
+  border: 1px solid #e0e0ee; border-radius: 3px;
+  padding: 1px 6px; color: var(--purple);
+}
+pre {
+  background: var(--ink); color: #e8e8f8;
+  border-radius: 8px; padding: 20px 24px;
+  font-family: var(--mono); font-size: 11px;
+  line-height: 1.65; overflow-x: auto;
+  margin: 16px 0;
+}
+pre .c  { color: #6b8caa; }
+pre .k  { color: #79aaff; }
+pre .s  { color: #98e06a; }
+pre .n  { color: #ffcc66; }
+pre .kw { color: #c792ea; }
+
+/* ---- CALLOUTS ---- */
+.callout {
+  border-radius: 8px; padding: 14px 18px;
+  margin: 16px 0; font-size: 12px; line-height: 1.7;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.callout-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.callout.blue   { background: var(--blue-lt);   color: #1e3a8a; border-left: 3px solid var(--blue); }
+.callout.green  { background: var(--green-lt);  color: #064e3b; border-left: 3px solid var(--green); }
+.callout.amber  { background: var(--amber-lt);  color: #78350f; border-left: 3px solid var(--amber); }
+.callout.purple { background: var(--purple-lt); color: #4c1d95; border-left: 3px solid var(--purple); }
+
+/* ---- STATE DIAGRAM ---- */
+#state-diagram svg { width: 100%; height: auto; display: block; }
+
+/* ---- SPEC CARDS ---- */
+.spec-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin: 16px 0;
+}
+.spec-card {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 16px 18px;
+}
+.spec-card-title {
+  font-size: 12px; font-weight: 700; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+  font-weight: 700; letter-spacing: .04em;
+}
+.badge-blue   { background: var(--blue-lt);   color: var(--blue); }
+.badge-green  { background: var(--green-lt);  color: var(--green); }
+.badge-amber  { background: var(--amber-lt);  color: var(--amber); }
+.badge-red    { background: var(--red-lt);    color: var(--red); }
+.badge-purple { background: var(--purple-lt); color: var(--purple); }
+.spec-card p  { font-size: 12px; color: var(--muted); margin: 0; }
+
+/* ---- ALGO STEPS ---- */
+.algo-steps { counter-reset: algo; margin: 12px 0; }
+.algo-step {
+  display: flex; gap: 14px; margin-bottom: 10px;
+  align-items: flex-start;
+}
+.algo-step::before {
+  counter-increment: algo;
+  content: counter(algo);
+  min-width: 24px; height: 24px;
+  background: var(--ink); color: #fff;
+  border-radius: 50%; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.algo-step p { margin: 0; font-size: 12px; color: var(--ink2); }
+
+/* ---- HCI HEURISTICS ---- */
+.heuristic-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.heuristic-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 12px 16px;
+}
+.h-num {
+  min-width: 28px; height: 28px;
+  border-radius: 6px; background: var(--ink);
+  color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.h-body h4 { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.h-body p  { font-size: 12px; color: var(--muted); margin: 0; }
+
+/* ---- FOOTER ---- */
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 24px 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--muted);
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .hero { grid-template-columns: 1fr; padding: 48px 20px 40px; gap: 32px; }
+  .hero h1 { font-size: 32px; }
+  .page-body { grid-template-columns: 1fr; padding: 0 20px 60px; gap: 0; }
+  .toc { display: none; }
+  .spec-grid { grid-template-columns: 1fr; }
+  footer { padding: 20px; flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#"><span>PLE</span> Phase 3</a>
+  <div class="nav-links">
+    <a href="#overview"    class="active">Overview</a>
+    <a href="#ui-spec">UI Spec</a>
+    <a href="#state">State Diagram</a>
+    <a href="#data">Data Design</a>
+    <a href="#algorithms">Algorithms</a>
+    <a href="#hci">HCI Principles</a>
+    <a href="#extensions">Extensions</a>
+    <a href="#challenges">Challenges</a>
+  </div>
+  <span class="nav-badge">CS 555 · 2026</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow">Take Home Lab · Group Exercise · Phase 3 of 4</div>
+    <h1>Design<br><strong>Specification</strong></h1>
+    <p class="hero-desc">
+      This document covers Phase 3 of the interaction design process for the PolyLine Editor application.
+      It translates Phase 2 analysis into precise UI specifications, data structure design,
+      interaction algorithms, and HCI principle mappings — everything a developer needs to implement
+      from scratch.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com" target="_blank">View on GitHub</a>
+      <a class="btn btn-outline" href="#state">State Diagram ↓</a>
+    </div>
+  </div>
+
+  <div class="phase-card">
+    <div class="phase-card-header">Figure 5.1 — Design Process Phases</div>
+    <div class="phase-row">
+      <span class="phase-num-sm">1</span>
+      <div class="phase-dot" style="background:#94a3b8"></div>
+      <span style="color:var(--muted); font-size:12px;">Requirements</span>
+    </div>
+    <div class="phase-row">
+      <span class="phase-num-sm">2</span>
+      <div class="phase-dot" style="background:#94a3b8"></div>
+      <span style="color:var(--muted); font-size:12px;">Analysis</span>
+    </div>
+    <div class="phase-row current">
+      <span class="phase-num-sm">3</span>
+      <div class="phase-dot" style="background:var(--blue)"></div>
+      <span class="phase-name">Design ← You are here</span>
+    </div>
+    <div class="phase-row">
+      <span class="phase-num-sm">4</span>
+      <div class="phase-dot" style="background:#94a3b8"></div>
+      <span style="color:var(--muted); font-size:12px;">Implement &amp; Deploy</span>
+    </div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="page-body">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="toc-label">On this page</div>
+    <a href="#overview">Overview</a>
+    <a href="#ui-spec">UI Specification</a>
+    <a href="#state">State Diagram</a>
+    <a href="#data">Data Design</a>
+    <a href="#algorithms">Algorithms</a>
+    <a href="#hci">HCI Principles</a>
+    <a href="#extensions">Extensions</a>
+    <a href="#challenges">Challenges</a>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <div class="section-eyebrow">Section 1</div>
+      <h2>Overview</h2>
+      <p>The PolyLine Editor allows a user to create and edit drawings made up of connected line segments (polylines) using a mouse and keyboard on a browser canvas. Phase 3 takes the requirements and analysis from the previous phases and turns them into a precise, implementable design — covering the interface layout, interaction modes, data structures, algorithms, and the HCI principles that justify each decision.</p>
+
+      <div class="callout blue">
+        <span class="callout-icon">i</span>
+        <div>This design specification is the contract between analysis and implementation. Phase 4 (Implement &amp; Deploy) must be buildable from this document alone — no guesswork required.</div>
+      </div>
+
+      <h3>Design goals</h3>
+      <div class="spec-grid">
+        <div class="spec-card">
+          <div class="spec-card-title"><span class="badge badge-blue">Goal 1</span> Direct manipulation</div>
+          <p>Every action must produce immediate, visible feedback on the canvas. No dialog boxes for routine operations.</p>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-title"><span class="badge badge-green">Goal 2</span> Keyboard parity</div>
+          <p>Every function accessible from the toolbar must also be reachable via a single keypress matching the textbook spec.</p>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-title"><span class="badge badge-amber">Goal 3</span> Zero install</div>
+          <p>The entire application ships as a single HTML file. Open in browser, use immediately. No build step, no server.</p>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-title"><span class="badge badge-purple">Goal 4</span> Persistence</div>
+          <p>Drawings must survive a page reload via JSON save/load. The file format must be human-readable and versioned.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- UI SPEC -->
+    <section id="ui-spec">
+      <div class="section-eyebrow">Section 2</div>
+      <h2>UI Specification</h2>
+      <p>The interface is divided into four regions. Each region has a precise visual and behavioural specification.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Region</th><th>Purpose</th><th>Height / Width</th><th>Key contents</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Header bar</strong></td><td>App identity + current mode badge</td><td>52px fixed</td><td>Logo, mode indicator pill, Help button</td></tr>
+            <tr><td><strong>Toolbar</strong></td><td>Mode buttons + action buttons</td><td>44px fixed</td><td>Begin, Move, Delete, Finish, Refresh, Save, Load, Clear, Insert, Grid snap</td></tr>
+            <tr><td><strong>Canvas</strong></td><td>Drawing surface — fills remaining height</td><td>flex 1</td><td>Background grid, polylines, vertex circles, preview line, hover ring</td></tr>
+            <tr><td><strong>Sidebar</strong></td><td>Stats + polyline list</td><td>210px fixed width</td><td>Count, total points, active name, mode label; scrollable polyline list</td></tr>
+            <tr><td><strong>Status bar</strong></td><td>Contextual instructions + mouse coords</td><td>28px fixed</td><td>Current action hint, XY coords, nearest vertex label</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Mode buttons — precise specification</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Key</th><th>Button colour</th><th>Cursor</th><th>Canvas behaviour on click</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Draw</strong></td><td><code>B</code></td><td>Blue (#2563eb)</td><td><code>crosshair</code></td><td>Append vertex to active polyline; auto-begin if none active</td></tr>
+            <tr><td><strong>Move</strong></td><td><code>M</code></td><td>Amber (#d97706)</td><td><code>move</code></td><td>Mousedown grabs nearest vertex (≤20px); mousemove drags it; mouseup releases</td></tr>
+            <tr><td><strong>Delete</strong></td><td><code>D</code></td><td>Red (#dc2626)</td><td><code>not-allowed</code></td><td>Click deletes nearest vertex (≤20px); neighbours reconnect</td></tr>
+            <tr><td><strong>Insert</strong></td><td><code>I</code></td><td>Default</td><td><code>cell</code></td><td>Click on segment (≤15px) inserts projected point between the two vertices</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Visual grammar — canvas elements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element</th><th>Visual</th><th>Condition</th></tr></thead>
+          <tbody>
+            <tr><td>Background grid</td><td>1px lines at 40px intervals, 3% white opacity</td><td>Always</td></tr>
+            <tr><td>Polyline edge</td><td>1.5px solid line in polyline's colour</td><td>Always; 2px + dashed when active &amp; unfinished</td></tr>
+            <tr><td>Start vertex</td><td>10×10 filled square in polyline colour</td><td>First point of unfinished polyline only</td></tr>
+            <tr><td>Active end vertex</td><td>Filled circle r=6, polyline colour, black stroke</td><td>Last point of unfinished active polyline</td></tr>
+            <tr><td>Other vertices</td><td>Filled circle r=4, polyline colour, black stroke</td><td>All other points</td></tr>
+            <tr><td>Preview line</td><td>Dashed line, polyline colour 47% opacity, from last vertex to cursor</td><td>Draw mode, active polyline unfinished</td></tr>
+            <tr><td>Hover ring</td><td>Unfilled circle r=9, 2px; red in Delete mode, amber in Move mode</td><td>Nearest vertex within 20px in Move or Delete mode</td></tr>
+            <tr><td>Insert preview</td><td>Filled green circle r=6 at projected point</td><td>Cursor within 15px of a segment in Insert mode</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STATE DIAGRAM -->
+    <section id="state">
+      <div class="section-eyebrow">Section 3</div>
+      <h2>State Diagram</h2>
+      <p>The application has one global <code>mode</code> variable and one <code>activeIdx</code> pointer. The diagram below shows all states and the events that trigger each transition.</p>
+
+      <div id="state-diagram">
+        <svg viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg" style="max-height:520px">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6b8a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- IDLE -->
+          <rect x="300" y="20" width="160" height="52" rx="10" fill="#f0f0f8" stroke="#6b6b8a" stroke-width="1.5"/>
+          <text x="380" y="41" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#0f0f14">IDLE</text>
+          <text x="380" y="58" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">no active polyline</text>
+
+          <!-- DRAW -->
+          <rect x="60" y="160" width="180" height="60" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+          <text x="150" y="184" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#1e3a8a">DRAW MODE</text>
+          <text x="150" y="200" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#2563eb">active polyline open</text>
+
+          <!-- MOVE -->
+          <rect x="520" y="160" width="180" height="60" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+          <text x="610" y="184" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#78350f">MOVE MODE</text>
+          <text x="610" y="200" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#d97706">drag vertex to reposition</text>
+
+          <!-- DELETE -->
+          <rect x="60" y="360" width="180" height="60" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+          <text x="150" y="384" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#7f1d1d">DELETE MODE</text>
+          <text x="150" y="400" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#dc2626">click vertex to remove</text>
+
+          <!-- INSERT -->
+          <rect x="520" y="360" width="180" height="60" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+          <text x="610" y="384" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#4c1d95">INSERT MODE</text>
+          <text x="610" y="400" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#7c3aed">click segment to add pt</text>
+
+          <!-- FINISHED -->
+          <rect x="290" y="450" width="180" height="52" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+          <text x="380" y="472" text-anchor="middle" font-family="'Space Mono',monospace" font-size="12" font-weight="700" fill="#064e3b">FINISHED</text>
+          <text x="380" y="488" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#059669">polyline locked</text>
+
+          <!-- === ARROWS === -->
+          <!-- IDLE → DRAW (press B) -->
+          <path d="M330 72 Q250 100 240 160" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+          <rect x="232" y="108" width="56" height="16" rx="3" fill="#fff"/>
+          <text x="260" y="120" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#2563eb">press B</text>
+
+          <!-- IDLE → MOVE -->
+          <path d="M450 72 Q520 100 522 160" fill="none" stroke="#6b6b8a" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+          <rect x="490" y="104" width="50" height="16" rx="3" fill="#fff"/>
+          <text x="515" y="116" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">press M</text>
+
+          <!-- DRAW → IDLE (press F / dblclick) -->
+          <path d="M155 160 Q180 110 300 72" fill="none" stroke="#6b6b8a" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="184" y="96" width="80" height="16" rx="3" fill="#fff"/>
+          <text x="224" y="108" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">F / dblclick</text>
+
+          <!-- DRAW → DELETE -->
+          <path d="M150 220 L150 360" fill="none" stroke="#6b6b8a" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+          <rect x="106" y="280" width="56" height="16" rx="3" fill="#fff"/>
+          <text x="134" y="292" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">press D</text>
+
+          <!-- DRAW → INSERT -->
+          <path d="M240 195 Q380 240 520 385" fill="none" stroke="#6b6b8a" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+          <rect x="336" y="274" width="50" height="16" rx="3" fill="#fff"/>
+          <text x="361" y="286" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">press I</text>
+
+          <!-- ANY → DRAW (Esc) -->
+          <path d="M240 390 Q280 430 296 450" fill="none" stroke="#059669" stroke-width="1" marker-end="url(#arr)"/>
+          <text x="248" y="436" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#059669">Esc</text>
+
+          <!-- DRAW → FINISHED -->
+          <path d="M190 410 Q260 460 290 470" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+          <rect x="196" y="430" width="52" height="16" rx="3" fill="#fff"/>
+          <text x="222" y="442" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#059669">press F</text>
+
+          <!-- MOVE → DRAW -->
+          <path d="M520 175 Q380 140 240 175" fill="none" stroke="#6b6b8a" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="340" y="136" width="82" height="16" rx="3" fill="#fff"/>
+          <text x="381" y="148" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">Esc / press B</text>
+
+          <!-- DELETE → DRAW -->
+          <path d="M240 390 Q300 370 390 220" fill="none" stroke="#6b6b8a" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+          <!-- MOVE self-loop (drag) -->
+          <path d="M700 160 Q740 130 700 155" fill="none" stroke="#d97706" stroke-width="1" marker-end="url(#arr)"/>
+          <text x="746" y="148" text-anchor="start" font-family="'Space Mono',monospace" font-size="9" fill="#d97706">drag</text>
+
+          <!-- Legend -->
+          <rect x="30" y="20" width="240" height="86" rx="8" fill="none" stroke="#e2e2ec" stroke-width="1"/>
+          <text x="44" y="40" font-family="'Space Mono',monospace" font-size="10" font-weight="700" fill="#0f0f14">Legend</text>
+          <line x1="44" y1="52" x2="80" y2="52" stroke="#2563eb" stroke-width="2" marker-end="url(#arr-blue)"/>
+          <text x="86" y="56" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">primary transition</text>
+          <line x1="44" y1="70" x2="80" y2="70" stroke="#6b6b8a" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+          <text x="86" y="74" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">mode switch</text>
+          <line x1="44" y1="88" x2="80" y2="88" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="86" y="92" font-family="'Space Mono',monospace" font-size="10" fill="#6b6b8a">finish / lock</text>
+        </svg>
+      </div>
+
+      <div class="callout amber">
+        <span class="callout-icon">!</span>
+        <div><strong>Key design decision:</strong> Mode is a global variable, not per-polyline state. This means switching to Delete mode works on <em>any</em> polyline's vertices, not just the active one — consistent with how graphic editors like Inkscape work.</div>
+      </div>
+    </section>
+
+    <!-- DATA DESIGN -->
+    <section id="data">
+      <div class="section-eyebrow">Section 4</div>
+      <h2>Data Structure Design</h2>
+
+      <h3>Polyline object schema</h3>
+      <pre><span class="c">// Single polyline object</span>
+{
+  <span class="n">id</span>:       <span class="k">Number</span>,        <span class="c">// auto-increment, never reused</span>
+  <span class="n">name</span>:     <span class="k">String</span>,        <span class="c">// "Line 1", "Line 2", ...</span>
+  <span class="n">color</span>:    <span class="k">String</span>,        <span class="c">// CSS hex, from 12-color palette</span>
+  <span class="n">points</span>:   <span class="k">Array</span>&lt;{<span class="n">x</span>:<span class="k">Number</span>, <span class="n">y</span>:<span class="k">Number</span>}&gt;,  <span class="c">// ordered vertices</span>
+  <span class="n">finished</span>: <span class="k">Boolean</span>       <span class="c">// false = drawing in progress</span>
+}
+
+<span class="c">// Global state</span>
+<span class="kw">const</span> <span class="n">polys</span>    = [];    <span class="c">// Array&lt;Polyline&gt;, max 100</span>
+<span class="kw">let</span>   <span class="n">activeIdx</span> = -1;  <span class="c">// index of polyline being drawn (-1 = none)</span>
+<span class="kw">let</span>   <span class="n">mode</span>     = <span class="s">'draw'</span>; <span class="c">// 'draw'|'move'|'delete'|'insert'</span></pre>
+
+      <h3>JSON persistence format</h3>
+      <pre><span class="c">// polylines.json — save file format</span>
+{
+  <span class="n">"version"</span>: <span class="k">1</span>,
+  <span class="n">"polys"</span>: [
+    {
+      <span class="n">"id"</span>: <span class="k">1</span>,
+      <span class="n">"name"</span>: <span class="s">"Line 1"</span>,
+      <span class="n">"color"</span>: <span class="s">"#4f8ef7"</span>,
+      <span class="n">"points"</span>: [
+        { <span class="n">"x"</span>: <span class="k">120</span>, <span class="n">"y"</span>: <span class="k">80</span> },
+        { <span class="n">"x"</span>: <span class="k">240</span>, <span class="n">"y"</span>: <span class="k">160</span> }
+      ],
+      <span class="n">"finished"</span>: <span class="k">true</span>
+    }
+  ]
+}</pre>
+
+      <div class="callout green">
+        <span class="callout-icon">✓</span>
+        <div>The <code>version</code> field is included so future implementations can detect and migrate older save files. Always increment on breaking schema changes.</div>
+      </div>
+
+      <h3>Color palette (12 colors, cycles on new polyline)</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0;">
+        <div style="width:28px;height:28px;border-radius:6px;background:#4f8ef7" title="#4f8ef7"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#7c5ff5" title="#7c5ff5"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#3ecf8e" title="#3ecf8e"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#f5a623" title="#f5a623"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#f46a6a" title="#f46a6a"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#5ee8d0" title="#5ee8d0"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#f5d76e" title="#f5d76e"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#f47aff" title="#f47aff"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#85c1ff" title="#85c1ff"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#ff9f6b" title="#ff9f6b"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#a8ff78" title="#a8ff78"></div>
+        <div style="width:28px;height:28px;border-radius:6px;background:#ff6bab" title="#ff6bab"></div>
+      </div>
+      <p style="font-size:12px; color:var(--muted)">All colors are high-contrast against the dark canvas background (WCAG AA for large text).</p>
+    </section>
+
+    <!-- ALGORITHMS -->
+    <section id="algorithms">
+      <div class="section-eyebrow">Section 5</div>
+      <h2>Algorithm Specifications</h2>
+
+      <h3>A — Find nearest vertex</h3>
+      <p>Used by Move and Delete modes to identify which point the user intends to interact with.</p>
+      <div class="algo-steps">
+        <div class="algo-step"><p>Iterate over every point in every polyline. Compute Euclidean distance: <code>d = √((mx−px)² + (my−py)²)</code></p></div>
+        <div class="algo-step"><p>Track the minimum <code>d</code> and corresponding <code>{polyIdx, ptIdx}</code> pair.</p></div>
+        <div class="algo-step"><p>Return result only if <code>d ≤ 20px</code> (hit threshold). Otherwise return no-hit.</p></div>
+      </div>
+      <pre><span class="kw">function</span> <span class="n">findNearest</span>(mx, my) {
+  <span class="kw">let</span> best = { polyIdx: -1, ptIdx: -1, d: Infinity };
+  <span class="kw">for</span> (poly of polys)
+    <span class="kw">for</span> (pt of poly.points) {
+      <span class="kw">const</span> d = Math.hypot(mx - pt.x, my - pt.y);
+      <span class="kw">if</span> (d &lt; best.d) best = { ...indices, d };
+    }
+  <span class="kw">return</span> best;
+}</pre>
+
+      <h3>B — Delete vertex</h3>
+      <div class="algo-steps">
+        <div class="algo-step"><p>Call findNearest(mx, my). If no hit, do nothing.</p></div>
+        <div class="algo-step"><p>If the polyline has exactly 1 point, remove the entire polyline from <code>polys[]</code>.</p></div>
+        <div class="algo-step"><p>Otherwise: <code>poly.points.splice(ptIdx, 1)</code>. The renderer automatically draws a segment between the now-adjacent neighbours — no explicit reconnect needed.</p></div>
+      </div>
+
+      <h3>C — Insert point on segment</h3>
+      <p>Projects the mouse position onto the nearest segment and inserts a new vertex at that projection.</p>
+      <div class="algo-steps">
+        <div class="algo-step"><p>For each consecutive pair (A, B) in each polyline, compute vector <code>AB</code> and its squared length <code>|AB|²</code>.</p></div>
+        <div class="algo-step"><p>Project mouse M onto segment: <code>t = clamp( dot(M−A, B−A) / |AB|² , 0, 1 )</code></p></div>
+        <div class="algo-step"><p>Projection point: <code>P = A + t·(B−A)</code>. Distance to cursor: <code>d = |MP|</code>.</p></div>
+        <div class="algo-step"><p>Track minimum <code>d</code> across all segments. If <code>d ≤ 15px</code>, insert <code>P</code> at <code>points.splice(afterIdx + 1, 0, P)</code>.</p></div>
+      </div>
+      <pre><span class="kw">function</span> <span class="n">projectOntoSegment</span>(M, A, B) {
+  <span class="kw">const</span> dx = B.x-A.x, dy = B.y-A.y;
+  <span class="kw">const</span> lenSq = dx*dx + dy*dy;
+  <span class="kw">if</span> (lenSq === 0) <span class="kw">return</span> A;
+  <span class="kw">const</span> t = Math.max(0, Math.min(1,
+    ((M.x-A.x)*dx + (M.y-A.y)*dy) / lenSq
+  ));
+  <span class="kw">return</span> { x: A.x + t*dx, y: A.y + t*dy };
+}</pre>
+
+      <h3>D — Snap to grid</h3>
+      <p>Applied at event capture time — every incoming mouse coordinate passes through this before being stored.</p>
+      <pre><span class="kw">const</span> GRID = 10; <span class="c">// px</span>
+<span class="kw">function</span> <span class="n">snap</span>(v) {
+  <span class="kw">return</span> snapEnabled ? Math.round(v / GRID) * GRID : v;
+}</pre>
+    </section>
+
+    <!-- HCI PRINCIPLES -->
+    <section id="hci">
+      <div class="section-eyebrow">Section 6</div>
+      <h2>HCI Principles Mapping</h2>
+      <p>Each design decision maps to at least one of Nielsen's 10 usability heuristics. This table is the justification for every choice made in Sections 2–5.</p>
+
+      <div class="heuristic-list">
+        <div class="heuristic-item">
+          <div class="h-num">H1</div>
+          <div class="h-body">
+            <h4>Visibility of system status</h4>
+            <p>Status bar updates on every action. Mode badge in header reflects current state. Preview line shows the next segment before the user commits. Hover ring shows which vertex will be affected before the click happens.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num">H2</div>
+          <div class="h-body">
+            <h4>Match between system and real world</h4>
+            <p>Vertices appear exactly where clicked. Snap-to-grid aligns with mental model of a drawing grid. Dimensions in the status bar use pixel units — the same coordinate system shown on screen.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num">H3</div>
+          <div class="h-body">
+            <h4>User control and freedom</h4>
+            <p>Esc always resets to draw mode. Finish (F) locks a polyline without deleting it. Sidebar delete button removes individual polylines. Clear all requires confirmation. Every destructive action is recoverable except clear-all.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num">H4</div>
+          <div class="h-body">
+            <h4>Consistency and standards</h4>
+            <p>Keyboard shortcuts match the textbook specification exactly (B, D, M, R, Q). Toolbar labels include the key shortcut so both interaction styles are visible at the same time.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num">H6</div>
+          <div class="h-body">
+            <h4>Recognition over recall</h4>
+            <p>All modes and actions are visible in the toolbar — the user never has to remember a command. The help overlay (press ?) lists every shortcut. The status bar provides a contextual hint for the current mode.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num">H7</div>
+          <div class="h-body">
+            <h4>Flexibility and efficiency of use</h4>
+            <p>Expert users operate entirely via keyboard shortcuts. Beginners use toolbar buttons. Both paths produce identical results. Grid snap is opt-in for precision work without slowing casual use.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout purple">
+        <span class="callout-icon">★</span>
+        <div><strong>Fitts's Law application:</strong> The 20px hit radius for vertex selection is a direct application of Fitts's Law. Small vertex circles (r=4) would require pixel-perfect clicking. The 20px hover zone makes the effective target area 5× larger, dramatically reducing pointing time and error rate.</div>
+      </div>
+    </section>
+
+    <!-- EXTENSIONS -->
+    <section id="extensions">
+      <div class="section-eyebrow">Section 7</div>
+      <h2>Proposed Extensions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Extension</th><th>Description</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Undo/Redo stack</strong></td><td>Deep-copy <code>polys[]</code> before each mutation; Ctrl+Z restores last snapshot</td><td><span class="badge badge-green">Low</span></td></tr>
+            <tr><td><strong>Closed polygon</strong></td><td>Checkbox to connect last vertex back to first; renders as filled shape with opacity</td><td><span class="badge badge-green">Low</span></td></tr>
+            <tr><td><strong>SVG export</strong></td><td>Serialize <code>polys[]</code> as an SVG file, one <code>&lt;polyline&gt;</code> element per entry</td><td><span class="badge badge-amber">Medium</span></td></tr>
+            <tr><td><strong>3D editing (WebGL)</strong></td><td>Replace Canvas 2D with Three.js; vertices as spheres; drag in 3D projected space</td><td><span class="badge badge-red">High</span></td></tr>
+            <tr><td><strong>STN integration</strong></td><td>Pass canvas bitmap to a Spatial Transformer Network for shape recognition and regularisation</td><td><span class="badge badge-red">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CHALLENGES -->
+    <section id="challenges">
+      <div class="section-eyebrow">Section 8</div>
+      <h2>Challenges &amp; Confusions</h2>
+      <p>The following were the genuine design-phase difficulties encountered — listed as the teacher encouraged.</p>
+
+      <div class="heuristic-list">
+        <div class="heuristic-item">
+          <div class="h-num" style="background:var(--amber); color:#000;">1</div>
+          <div class="h-body">
+            <h4>Mode vs. tool mental model</h4>
+            <p>Should "Delete" and "Move" be modes (persistent until switched) or tools (active only while held)? Decided on persistent modes to match the textbook spec, but tool-style holding (like Photoshop's Alt key) would feel more fluid for experienced users.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num" style="background:var(--amber); color:#000;">2</div>
+          <div class="h-body">
+            <h4>Hit threshold calibration</h4>
+            <p>20px for vertices and 15px for segments were chosen empirically. Too small causes missed clicks; too large causes ambiguity when vertices are close together. A proper solution would use a spatial index (e.g. quadtree) and dynamic threshold based on zoom level.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num" style="background:var(--amber); color:#000;">3</div>
+          <div class="h-body">
+            <h4>No undo in spec</h4>
+            <p>The original specification does not include undo. This is a significant usability gap — delete is irreversible. An undo stack was proposed as an extension but not in the base spec. Decided to follow the spec strictly and flag this as a known limitation.</p>
+          </div>
+        </div>
+        <div class="heuristic-item">
+          <div class="h-num" style="background:var(--amber); color:#000;">4</div>
+          <div class="h-body">
+            <h4>Coordinate system on resize</h4>
+            <p>HTML Canvas pixel dimensions are separate from CSS layout dimensions. Without explicit sync, a resized window stretches all existing drawings. Resolved by using ResizeObserver to reset <code>canvas.width/height</code> on container resize, at the cost of clearing the canvas — hence the need for the JSON save/load system.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>CS 555 · Human Computer Interaction &amp; Computer Graphics · 2026</span>
+  <span>Phase 3 — Design · Dr. Humera Tariq</span>
+</footer>
+
+<script>
+// Active TOC / nav link highlighting on scroll
+const sections = document.querySelectorAll('section[id]');
+const tocLinks  = document.querySelectorAll('.toc a');
+const navLinks  = document.querySelectorAll('.nav-links a');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+id));
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+id));
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
